@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard | resolveIT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="resolveIT Admin Control Center - Manage grievance cases">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+
+    <div class="dashboard-layout">
+
+        <!-- ===== SIDEBAR ===== -->
+        <div class="sidebar sidebar-admin">
+            <div class="sidebar-brand">
+                
+            </div>
+
+            <div class="sidebar-section-label">Main</div>
+            <a href="dashboard.html" class="active">
+                <span class="nav-icon"><i class="bi bi-speedometer2"></i></span> Dashboard
+            </a>
+            <a href="#casesSection">
+                <span class="nav-icon"><i class="bi bi-folder2-open"></i></span> All Cases
+            </a>
+            <a href="#committeeSection">
+                <span class="nav-icon"><i class="bi bi-people-fill"></i></span> Committee
+            </a>
+            <a href="#auditSection">
+                <span class="nav-icon"><i class="bi bi-journal-text"></i></span> Audit Logs
+            </a>
+
+            <hr class="sidebar-divider">
+            <div class="sidebar-section-label">Account</div>
+            <div class="mt-auto">
+                <a href="../login.html" onclick="localStorage.removeItem('currentUser')">
+                    <span class="nav-icon"><i class="bi bi-box-arrow-right"></i></span> Sign Out
+                </a>
+            </div>
+        </div>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <div class="dashboard-content">
+
+            <!-- HEADER -->
+            <div class="dashboard-header">
+                <div>
+                    <h2>Admin Control Center</h2>
+                    <p class="text-muted mb-0">Welcome back, <span id="username" class="fw-semibold"></span></p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button class="custom-btn" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                        <i class="bi bi-person-plus-fill me-1"></i> Add Committee Member
+                    </button>
+                </div>
+            </div>
+
+            <!-- SYSTEM ALERTS -->
+            <div class="case-card mb-4 reveal">
+                <h5 class="mb-3"><i class="bi bi-exclamation-triangle-fill me-2 text-warning"></i>System Alerts</h5>
+                <div id="adminAlerts"></div>
+            </div>
+
+            <!-- STATS GRID -->
+            <div class="stats-grid reveal">
+                <div class="stat-card accent-purple">
+                    <div class="stat-icon"><i class="bi bi-folder2-open"></i></div>
+                    <h3 id="totalCases">0</h3>
+                    <p>Total Cases</p>
+                </div>
+                <div class="stat-card accent-blue">
+                    <div class="stat-icon"><i class="bi bi-search"></i></div>
+                    <h3 id="reviewCases">0</h3>
+                    <p>Under Review</p>
+                </div>
+                <div class="stat-card accent-teal">
+                    <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                    <h3 id="resolvedCases">0</h3>
+                    <p>Resolved</p>
+                </div>
+                <div class="stat-card accent-red">
+                    <div class="stat-icon"><i class="bi bi-shield-exclamation"></i></div>
+                    <h3 id="escalatedCases">0</h3>
+                    <p>Escalated</p>
+                </div>
+                <div class="stat-card accent-gold">
+                    <div class="stat-icon"><i class="bi bi-person-fill"></i></div>
+                    <h3 id="totalUsers">0</h3>
+                    <p>Complainants</p>
+                </div>
+            </div>
+
+            <!-- CHARTS -->
+            <div class="row reveal">
+                <div class="col-lg-5 mb-4">
+                    <div class="case-card h-100">
+                        <h6 class="text-center fw-semibold mb-4">Case Status Distribution</h6>
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                <div class="col-lg-7 mb-4">
+                    <div class="case-card h-100">
+                        <h6 class="fw-semibold mb-4">Priority Distribution</h6>
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FEEDBACK SUMMARY -->
+            <div class="case-card mb-4 reveal">
+                <h5 class="mb-3"><i class="bi bi-star-fill me-2 text-warning"></i>Feedback Summary</h5>
+                <div id="feedbackSummary"></div>
+            </div>
+
+            <!-- COMMITTEE SECTION -->
+            <div id="committeeSection" class="case-card mb-4 reveal">
+                <div class="section-header">
+                    <h5><i class="bi bi-people-fill me-2"></i>Internal Committee Members</h5>
+                    <button class="custom-btn" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                        <i class="bi bi-person-plus me-1"></i> Add Member
+                    </button>
+                </div>
+                <div class="row mt-3" id="committeeList"></div>
+            </div>
+
+            <!-- ALL CASES TABLE -->
+            <div id="casesSection" class="table-wrapper reveal">
+                <div class="filter-row">
+                    <h5><i class="bi bi-folder2-open me-2"></i>All Cases</h5>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by ID or title…">
+                </div>
+
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Case ID</th>
+                            <th>Title</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Date</th>
+                            <th>Assigned To</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTable"></tbody>
+                </table>
+            </div>
+
+            <!-- AUDIT LOGS -->
+            <div id="auditSection" class="table-wrapper mt-4 audit-table reveal">
+                <div class="section-header mb-3">
+                    <h5><i class="bi bi-journal-text me-2"></i>Audit Logs</h5>
+                </div>
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Action</th>
+                            <th>Details</th>
+                            <th>Actor</th>
+                            <th>Role</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="auditTableBody"></tbody>
+                </table>
+            </div>
+
+        </div><!-- /dashboard-content -->
+    </div><!-- /dashboard-layout -->
+
+    <!-- ADD COMMITTEE MEMBER MODAL -->
+    <div class="modal fade" id="addMemberModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-4" style="border-radius:20px;border:none">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="fw-bold"><i class="bi bi-person-plus-fill me-2"></i>Add Committee Member</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="committeeForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="memberName" class="form-control" placeholder="e.g., Dr. Priya Sharma"
+                                required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" id="memberEmail" class="form-control"
+                                placeholder="officer@authority.gov.in" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Department / Unit</label>
+                            <input type="text" id="memberDept" class="form-control"
+                                placeholder="e.g., Cyber Crime Cell, CID, Women's Cell">
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label">Designation / Specialization</label>
+                            <select id="memberRole" class="form-select" required>
+                                <option value="" disabled selected>Select a designation…</option>
+                                <option>Cyber Crime Expert</option>
+                                <option>CID Officer</option>
+                                <option>Police Officer (Women Cell)</option>
+                                <option>Forensic Analyst</option>
+                                <option>Legal Advisor</option>
+                                <option>Women Rights Advocate</option>
+                                <option>Investigating Officer</option>
+                                <option>Magistrate / Judicial Officer</option>
+                                <option>Counsellor / Psychologist</option>
+                                <option>Social Welfare Officer</option>
+                            </select>
+                        </div>
+                        <div class="alert-card alert-newuser" style="font-size:12px">
+                            <i class="bi bi-key-fill me-1"></i> Default login password: <strong>committee123</strong>
+                        </div>
+                        <button type="submit" class="custom-btn w-100 mt-3">
+                            <i class="bi bi-person-plus me-1"></i> Add Member
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../assets/admin.js"></script>
+    <script src="../assets/layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+if (!currentUser || (currentUser.role || "").toUpperCase() !== "ADMIN") {
+    window.location.href = "../login.html";
+} else {
+    document.getElementById("username").innerText = currentUser.name;
+}
+
+        // Scroll reveal
+        const reveals = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver(entries => {
+            entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+        }, { threshold: 0.1 });
+        reveals.forEach(el => observer.observe(el));
+    </script>
+
+</body>
+
+</html>

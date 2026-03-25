@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Case Details | Committee — resolveIT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+
+    <div class="dashboard-layout">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar sidebar-committee">
+            <div class="sidebar-brand"></div>
+            <a href="dashboard.html"><span class="nav-icon"><i class="bi bi-speedometer2"></i></span> Dashboard</a>
+            <a href="#" class="active"><span class="nav-icon"><i class="bi bi-file-earmark-text-fill"></i></span> Case Details</a>
+            <div class="mt-auto">
+                <a href="../login.html" onclick="localStorage.removeItem('currentUser')">
+                    <span class="nav-icon"><i class="bi bi-box-arrow-right"></i></span> Sign Out
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="dashboard-content">
+
+            <div class="mb-3">
+                <a href="dashboard.html" class="btn btn-outline-secondary" style="border-radius:25px;font-size:13px">
+                    ← Back to Dashboard
+                </a>
+            </div>
+
+            <!-- CASE HEADER -->
+            <div class="dashboard-header">
+                <div>
+                    <h2 id="caseTitle"></h2>
+                    <p class="text-muted mb-0">Case ID: <code id="caseId"></code></p>
+                </div>
+                <span id="caseStatus" class="status-badge"></span>
+            </div>
+
+            <div class="row">
+                <!-- CASE DETAILS -->
+                <div class="col-lg-8 mb-4">
+                    <div class="case-card">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label d-block" style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">Date Filed</label>
+                                <span id="caseDate" class="fw-semibold"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label d-block" style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">Priority</label>
+                                <span id="casePriority" class="fw-semibold priority-text"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label d-block" style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.5px">Type</label>
+                                <span id="caseType" class="fw-semibold"></span>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6 class="fw-semibold mb-2"><i class="bi bi-card-text me-1"></i> Description</h6>
+                        <p id="caseDescription" style="line-height:1.8;color:#4b5563"></p>
+
+                        <!-- EVIDENCE FILE SECTION -->
+                        <div id="evidenceSection" style="display:none">
+                            <hr>
+                            <h6 class="fw-semibold mb-2">
+                                <i class="bi bi-paperclip me-1"></i> Evidence File
+                            </h6>
+                            <div id="evidenceFileDisplay"></div>
+                        </div>
+
+                        <!-- INCIDENT DETAILS SECTION -->
+                        <div id="incidentSection" style="display:none">
+                            <hr>
+                            <h6 class="fw-semibold mb-2">
+                                <i class="bi bi-geo-alt me-1"></i> Incident Details
+                            </h6>
+                            <div id="incidentDetailsDisplay" style="font-size:13px;color:#4b5563"></div>
+                        </div>
+                    </div>
+
+                    <!-- FEEDBACK RECEIVED -->
+                    <div class="case-card">
+                        <h5><i class="bi bi-star-fill me-2 text-warning"></i>Feedback</h5>
+                        <div id="feedbackArea"></div>
+                    </div>
+                </div>
+
+                <!-- ACTION PANEL -->
+                <div class="col-lg-4 mb-4">
+                    <div class="form-card mb-4">
+                        <h5 class="mb-3"><i class="bi bi-arrow-repeat me-2"></i>Case Actions</h5>
+                        <label class="form-label">Update Status</label>
+                        <select id="statusUpdate" class="form-select mb-3">
+                            <option value="Under Review">Under Review</option>
+                            <option value="In Investigation">In Investigation</option>
+                            <option value="Resolved">Resolved</option>
+                            <option value="Escalated">Escalated</option>
+                        </select>
+                        <button onclick="updateStatus()" class="custom-btn w-100 mb-2">
+                            Update Status
+                        </button>
+                        <button onclick="generateReport()" class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i> Generate Report
+                        </button>
+                    </div>
+
+                    <!-- STATUS TIMELINE -->
+                    <div class="case-card">
+                        <h5 class="mb-3"><i class="bi bi-bar-chart-steps me-2"></i>Progress</h5>
+                        <div class="timeline flex-column" style="flex-direction:column!important;gap:8px;align-items:flex-start">
+                            <div class="timeline-item active" id="timelineSubmitted"><i class="bi bi-check-circle-fill me-1"></i> Complaint Filed</div>
+                            <div class="timeline-item" id="timelineUnderReview"><i class="bi bi-search me-1"></i> Under Review</div>
+                            <div class="timeline-item" id="timelineInInvestigation"><i class="bi bi-eye-fill me-1"></i> In Investigation</div>
+                            <div class="timeline-item" id="timelineResolved"><i class="bi bi-check2-all me-1"></i> Resolved</div>
+                            <div class="timeline-item" id="timelineEscalated" style="background:#fee2e2;color:#991b1b">
+                                <i class="bi bi-shield-exclamation me-1"></i> Escalated
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CHAT SECTION -->
+            <div class="case-card">
+                <h5 class="mb-3"><i class="bi bi-chat-dots-fill me-2"></i>Case Communication</h5>
+                <div class="chat-box">
+                    <div class="chat-header">
+                        <div class="chat-icon"><i class="bi bi-chat-dots-fill"></i></div>
+                        Committee ↔ Complainant Chat
+                    </div>
+                    <div class="chat-messages" id="chatMessages"></div>
+                    <div class="chat-input-area">
+                        <input type="text" id="chatInput" placeholder="Type a message…"
+                            onkeypress="if(event.key==='Enter') sendChatMessage()">
+                        <button class="chat-send-btn" onclick="sendChatMessage()">
+                            <i class="bi bi-send-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="../assets/committee.js"></script>
+    <script src="../assets/layout.js"></script>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+        if (!currentUser || (currentUser.role || "").toUpperCase() !== "COMMITTEE") {
+            window.location.href = "../login.html";
+        }
+    </script>
+
+</body>
+</html>

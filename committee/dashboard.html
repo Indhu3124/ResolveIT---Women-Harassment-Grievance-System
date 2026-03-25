@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Committee Dashboard | resolveIT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../assets/style.css">
+</head>
+
+<body>
+
+    <div class="dashboard-layout">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar sidebar-committee">
+            <div class="sidebar-brand">
+                <div class="sidebar-logo-circle">
+                    <img src="../assets/images/logo.png" alt="resolveIT"
+                         onerror="this.style.display='none'">
+                </div>
+                <h4>resolveIT</h4>
+            </div>
+
+            <div class="sidebar-section-label">Navigation</div>
+            <a href="dashboard.html" class="active">
+                <span class="nav-icon"><i class="bi bi-speedometer2"></i></span> Dashboard
+                <span class="assigned-badge" id="assignedBadge" style="display:none"></span>
+            </a>
+            <a href="#">
+                <span class="nav-icon"><i class="bi bi-folder2-open"></i></span> My Cases
+            </a>
+
+            <hr class="sidebar-divider">
+            <div class="sidebar-section-label">Account</div>
+            <div class="mt-auto">
+                <a href="../login.html" onclick="localStorage.removeItem('currentUser')">
+                    <span class="nav-icon"><i class="bi bi-box-arrow-right"></i></span> Sign Out
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="dashboard-content">
+
+            <!-- HEADER -->
+            <div class="dashboard-header">
+                <div>
+                    <h2>Committee Dashboard</h2>
+                    <p class="text-muted mb-0">Welcome back, <span id="username" class="fw-semibold"></span></p>
+                </div>
+            </div>
+
+            <!-- STATS -->
+            <div class="stats-grid">
+                <div class="stat-card accent-purple">
+                    <div class="stat-icon"><i class="bi bi-folder2-open"></i></div>
+                    <h3 id="totalCases">0</h3>
+                    <p>Assigned Cases</p>
+                </div>
+                <div class="stat-card accent-blue">
+                    <div class="stat-icon"><i class="bi bi-search"></i></div>
+                    <h3 id="reviewCases">0</h3>
+                    <p>Under Review</p>
+                </div>
+                <div class="stat-card accent-teal">
+                    <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+                    <h3 id="resolvedCases">0</h3>
+                    <p>Resolved</p>
+                </div>
+                <div class="stat-card accent-red">
+                    <div class="stat-icon"><i class="bi bi-shield-exclamation"></i></div>
+                    <h3 id="escalatedCases">0</h3>
+                    <p>Escalated</p>
+                </div>
+            </div>
+
+            <!-- CASES TABLE -->
+            <div class="table-wrapper">
+                <div class="filter-row">
+                    <h5><i class="bi bi-folder2-open me-2"></i>Case Management</h5>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search case…">
+                </div>
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Case ID</th>
+                            <th>Title</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="committeeTable"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="../assets/committee.js"></script>
+    <script src="../assets/layout.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // FIX: Backend returns role as UPPERCASE ("COMMITTEE"), so compare with toUpperCase()
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+        if (!currentUser || currentUser.role.toUpperCase() !== "COMMITTEE") {
+            window.location.href = "../login.html";
+        } else {
+            document.getElementById("username").innerText = currentUser.name;
+        }
+    </script>
+
+</body>
+
+</html>

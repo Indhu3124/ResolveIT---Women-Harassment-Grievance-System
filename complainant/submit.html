@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Submit Complaint | resolveIT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../assets/style.css">
+    <style>
+        .upload-area {
+            border: 2px dashed #967fd8;
+            border-radius: 14px;
+            padding: 28px 20px;
+            text-align: center;
+            cursor: pointer;
+            background: #faf8ff;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #7b5cff;
+            background: #f3edff;
+        }
+        .upload-icon { font-size: 32px; margin-bottom: 8px; }
+        .upload-text { font-weight: 600; color: #6d28d9; font-size: 14px; }
+        .upload-sub  { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+
+        .file-preview {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #065f46;
+        }
+        .remove-file {
+            margin-left: auto;
+            cursor: pointer;
+            color: #ef4444;
+            font-weight: 600;
+        }
+        .remove-file:hover { opacity: 0.7; }
+
+        .incident-section {
+            border: 1.5px solid #e9d5ff;
+            border-radius: 14px;
+            background: #faf8ff;
+            padding: 20px 22px;
+        }
+        .incident-section-title {
+            font-weight: 600;
+            color: #6d28d9;
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+        .optional-badge {
+            font-size: 11px;
+            color: #9ca3af;
+            font-weight: 400;
+            background: #f3f4f6;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="dashboard-layout">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar sidebar-complainant">
+            <div class="sidebar-brand"></div>
+
+            <div class="sidebar-section-label">Menu</div>
+            <a href="dashboard.html"><span class="nav-icon">🏠</span> Dashboard</a>
+            <a href="submit.html" class="active"><span class="nav-icon">📝</span> New Complaint</a>
+            <a href="track.html"><span class="nav-icon">🔍</span> Track Status</a>
+            <a href="settings.html"><span class="nav-icon">⚙️</span> Settings</a>
+
+            <hr class="sidebar-divider">
+            <div class="mt-auto">
+                <a href="../login.html" onclick="localStorage.removeItem('currentUser')">
+                    <span class="nav-icon">🚪</span> Sign Out
+                </a>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="dashboard-content">
+
+            <div class="dashboard-header">
+                <div>
+                    <h2>Submit Complaint</h2>
+                    <p class="text-muted mb-0">Your report is confidential and securely stored</p>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <form id="complaintForm">
+
+                    <!-- Complaint Type -->
+                    <div class="mb-4">
+                        <label class="form-label">🏷️ Complaint Type <span class="text-danger">*</span></label>
+                        <select id="type" class="form-select" required>
+                            <option value="">Select complaint type</option>
+                            <option value="Workplace Harassment">Workplace Harassment</option>
+                            <option value="Discrimination">Discrimination</option>
+                            <option value="Cyber Harassment">Cyber Harassment</option>
+                            <option value="Sexual Harassment">Sexual Harassment</option>
+                            <option value="Bullying">Bullying</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Title -->
+                    <div class="mb-4">
+                        <label class="form-label">📌 Complaint Title <span class="text-danger">*</span></label>
+                        <input type="text" id="title" class="form-control"
+                            placeholder="Brief title describing the issue" required>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label class="form-label">📝 Description <span class="text-danger">*</span></label>
+                        <textarea id="description" rows="5" class="form-control"
+                            placeholder="Describe the incident in detail — what happened, who was involved, how it affected you…"
+                            required></textarea>
+                    </div>
+
+                    <!-- OPTIONAL INCIDENT DETAILS SECTION -->
+                    <div class="incident-section mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="incident-section-title">📍 Incident Details</span>
+                            <span class="optional-badge">Optional — fill only what you remember</span>
+                        </div>
+                        <p class="text-muted mb-3" style="font-size:13px">
+                            Not required — provide as much or as little as you know.
+                            Every detail helps the committee investigate more effectively.
+                        </p>
+
+                        <!-- Location -->
+                        <div class="mb-3">
+                            <label class="form-label" style="font-size:13px;font-weight:500">
+                                📍 Where did it happen?
+                            </label>
+                            <input type="text" id="incidentLocation" class="form-control"
+                                placeholder="e.g., Office Floor 3, Cafeteria, Online meeting, Work group chat…">
+                            <small class="text-muted">Be as specific or vague as you're comfortable with</small>
+                        </div>
+
+                        <div class="row g-3">
+                            <!-- Date -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size:13px;font-weight:500">
+                                    📅 When did it happen? (Date)
+                                </label>
+                                <input type="date" id="incidentDate" class="form-control">
+                                <small class="text-muted">Approximate date is fine</small>
+                            </div>
+
+                            <!-- Time -->
+                            <div class="col-md-6">
+                                <label class="form-label" style="font-size:13px;font-weight:500">
+                                    🕐 Approximate Time
+                                </label>
+                                <input type="time" id="incidentTime" class="form-control">
+                                <small class="text-muted">Leave blank if unsure</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Priority -->
+                    <div class="mb-4">
+                        <label class="form-label">⚡ Priority Level</label>
+                        <select id="priority" class="form-select">
+                            <option value="Low">🟢 Low — Not urgent</option>
+                            <option value="Medium" selected>🟡 Medium — Needs attention</option>
+                            <option value="High">🔴 High — Urgent</option>
+                        </select>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="mb-4">
+                        <label class="form-label">
+                            📎 Upload Evidence File
+                            <span class="optional-badge">Optional</span>
+                        </label>
+                        <div class="upload-area" id="uploadArea"
+                            onclick="document.getElementById('evidenceFile').click()"
+                            ondragover="event.preventDefault()"
+                            ondrop="handleFileDrop(event)">
+                            <div class="upload-icon">📁</div>
+                            <div class="upload-text">Click to upload or drag & drop</div>
+                            <div class="upload-sub">Supports: JPG, PNG, PDF, DOC, DOCX · Max 5MB</div>
+                            <input type="file" id="evidenceFile" name="evidenceFile"
+                                accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
+                                style="display:none"
+                                onchange="handleFileSelect(this)">
+                        </div>
+                        <div id="filePreview" style="display:none" class="file-preview mt-2">
+                            <span>📄</span>
+                            <span id="fileName"></span>
+                            <span class="remove-file" onclick="removeFile()">✕ Remove</span>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            Screenshots, documents, or any file that supports your complaint
+                        </small>
+                    </div>
+
+                    <!-- Anonymous -->
+                    <div class="form-check mb-4">
+                        <input class="form-check-input" type="checkbox" id="anonymous">
+                        <label class="form-check-label">
+                            🕵️ Submit anonymously
+                            <small class="text-muted d-block" style="font-size:12px">
+                                Your name will not be shown to the committee
+                            </small>
+                        </label>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button type="submit" class="custom-btn">
+                            📨 Submit Complaint
+                        </button>
+                        <a href="dashboard.html" class="btn btn-outline-secondary" style="border-radius:30px">
+                            Cancel
+                        </a>
+                    </div>
+
+                </form>
+            </div>
+
+            <!-- POSH INFO -->
+            <div class="alert-card alert-newuser mt-4" style="max-width:720px">
+                🛡️ <strong>Your privacy is protected.</strong> This complaint is stored securely and accessible
+                only to authorized personnel. Retaliation against complainants is strictly prohibited under
+                the POSH Act.
+            </div>
+
+        </div>
+    </div>
+
+    <script src="../assets/complainant.js"></script>
+    <script src="../assets/layout.js"></script>
+
+    <script>
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+        if (!currentUser) window.location.href = "../login.html";
+
+        // Set max date to today (can't report future incidents)
+        document.getElementById("incidentDate").max = new Date().toISOString().split("T")[0];
+    </script>
+
+</body>
+
+</html>

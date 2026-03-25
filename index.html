@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>resolveIT | Women Grievance Redressal System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+        content="resolveIT — A safe, confidential grievance redressal platform for women. POSH compliant, secure reporting.">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        .logo-circle{
+            background: rgba(255,255,255,0.15);
+
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ===== NAVBAR ===== -->
+    <nav class="custom-navbar">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-circle">
+                    <img src="assets/images/logo.png" alt="resolveIT" onerror="this.style.display='none'">
+                </div>
+                <span class="brand-text">resolveIT</span>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="login.html" class="btn btn-outline-light" style="border-radius:25px;font-size:14px">Login</a>
+                <a href="register.html" class="btn btn-light"
+                    style="border-radius:25px;font-size:14px;color:#7b5cff;font-weight:600">Register</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ===== HERO SECTION ===== -->
+    <section class="hero-section d-flex align-items-center text-white">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-7">
+
+                    <h1 class="hero-title">
+                        A Safe Space to<br>
+                        <span class="animated-text"></span>
+                    </h1>
+
+                    <p class="hero-subtitle mt-3">
+                        Empowering voices. Ensuring accountability.<br>
+                        A secure and confidential grievance platform for women.
+                    </p>
+
+                    <div class="mt-4 d-flex gap-3 flex-wrap">
+                        <a href="#awareness" class="custom-btn">Know Your Rights</a>
+                        <a href="#how" class="btn btn-outline-light" style="border-radius:30px;padding:10px 25px">How It
+                            Works</a>
+                    </div>
+
+                    <div class="trust-badges mt-4">
+                        🔒 Confidential &nbsp;|&nbsp;  POSH Compliant &nbsp;|&nbsp;  Secure Reporting
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== AWARENESS SECTION ===== -->
+    <section id="awareness" class="py-5 awareness-section">
+        <div class="container text-center">
+            <h2 class="section-title mb-5 reveal">Know Your Rights</h2>
+
+            <div class="row g-4">
+                <div class="col-md-4 reveal">
+                    <div class="info-card">
+                        <div style="font-size:40px;margin-bottom:16px"></div>
+                        <h5>What is Workplace Harassment?</h5>
+                        <p class="text-muted">Unwelcome behavior including verbal, physical, or psychological misconduct
+                            affecting dignity and safety at work.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 reveal">
+                    <div class="info-card">
+                        <div style="font-size:40px;margin-bottom:16px"></div>
+                        <h5>POSH Act Overview</h5>
+                        <p class="text-muted">The Prevention of Sexual Harassment Act ensures safe workplace
+                            environments and legal protection for all employees.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 reveal">
+                    <div class="info-card">
+                        <div style="font-size:40px;margin-bottom:16px"></div>
+                        <h5>Confidential Reporting</h5>
+                        <p class="text-muted">Your identity and case details remain secure and accessible only to
+                            authorized committee members.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== HOW IT WORKS ===== -->
+    <section id="how" class="py-5" style="background:#f8f9fa">
+        <div class="container text-center">
+            <h2 class="section-title mb-5 reveal">How resolveIT Works</h2>
+
+            <div class="row g-4">
+                <div class="col-md-4 reveal">
+                    <div class="info-card">
+                        <div style="font-size:40px;margin-bottom:16px">1️</div>
+                        <h5>Submit Complaint</h5>
+                        <p class="text-muted">File your complaint securely with optional anonymous mode. Describe the
+                            issue with full confidentiality.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 reveal">
+                    <div class="info-card">
+                        <div style="font-size:40px;margin-bottom:16px">2️</div>
+                        <h5>Committee Review</h5>
+                        <p class="text-muted">An internal committee reviews the complaint confidentially and
+                            communicates with you directly.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 reveal">
+                    <div class="info-card">
+                        <div style="font-size:40px;margin-bottom:16px">3️</div>
+                        <h5>Track Resolution</h5>
+                        <p class="text-muted">Monitor real-time updates, timelines, and receive notifications until your
+                            issue is fully resolved.</p>
+                    </div>
+                </div>
+            </div>
+
+    
+        </div>
+    </section>
+
+    <!-- ===== FOOTER ===== -->
+    <footer class="footer">
+        © 2026 resolveIT | Women Harassment Grievance Redressal System<br>
+        <small style="opacity:0.7">🛡️ POSH Compliant &nbsp;|&nbsp; 🔒 Confidential &nbsp;|&nbsp; ⚡ Secure</small>
+    </footer>
+
+    <script src="assets/auth.js"></script>
+ 
+    <script>
+        // Scroll reveal
+        const reveals = document.querySelectorAll('.reveal');
+        const obs = new IntersectionObserver(entries => {
+            entries.forEach(e => {
+                if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); }
+            });
+        }, { threshold: 0.1 });
+        reveals.forEach(el => obs.observe(el));
+    </script>
+
+</body>
+
+</html>
