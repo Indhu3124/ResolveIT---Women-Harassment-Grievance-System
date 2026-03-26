@@ -86,7 +86,7 @@ body {
     width: 46px;
     height: 46px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.95);
+    
     display: flex;
     align-items: center;
     justify-content: center;
@@ -177,7 +177,7 @@ body {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    background: rgba(255,255,255,0.15);
+    
     display: flex;
     align-items: center;
     justify-content: center;
@@ -474,7 +474,23 @@ body {
     inset: 0;
     background: linear-gradient(135deg, rgba(123, 92, 255, 0.15) 0%, rgba(0, 198, 167, 0.10) 100%);
 }
+.hero-section {
+    position: relative;
+    z-index: 1;
+}
 
+.hero-section .container {
+    position: relative;
+    z-index: 5;
+}
+.hero-section::before {
+    pointer-events: none;
+}
+.custom-btn,
+.btn {
+    position: relative;
+    z-index: 10;
+}
 .hero-title {
     font-size: 50px;
     font-weight: 800;
