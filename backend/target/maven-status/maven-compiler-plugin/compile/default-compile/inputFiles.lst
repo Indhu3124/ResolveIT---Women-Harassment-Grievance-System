@@ -2,6 +2,7 @@ C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\NotificationService.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\controller\AuthController.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\dto\RegisterRequest.java
+C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\FileStorageService.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\controller\AuditLogController.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\repository\AuditLogRepository.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\BackendApplication.java
@@ -15,12 +16,15 @@ C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\config\DataSeeder.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\CommitteeService.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\controller\UserController.java
+C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\repository\MessageRepository.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\AuthService.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\entity\Feedback.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\UserService.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\entity\Complaint.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\controller\AdminController.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\dto\LoginResponse.java
+C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\entity\Message.java
+C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\dto\MessageDTO.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\repository\UserRepository.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\controller\CommitteeController.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\dto\LoginRequest.java
@@ -33,7 +37,10 @@ C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\repository\FeedbackRepository.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\EmailService.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\FeedbackService.java
+C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\controller\MessageController.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\controller\NotificationController.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\dto\ComplaintRequest.java
+C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\MessageService.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\ComplaintService.java
+C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\config\FileUploadConfig.java
 C:\Users\indhu\OneDrive\Pictures\Desktop\Finalresolve\backend\src\main\java\com\resolveit\backend\service\AuditLogService.java

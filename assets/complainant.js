@@ -1,10 +1,15 @@
 /* ============================================================
    resolveIT — complainant.js
-   CHANGED: Submit complaint now uploads evidence file first
-            via POST /api/complaints/upload (multipart),
-            then includes the returned filename in complaint JSON.
-            Everything else is unchanged.
+   MERGED: Your features (evidence upload, feedback, dashboard)
+   + Her features (backend API chat, polling, file-in-chat,
+     _trackedCaseId global, initializeChat on track page)
 ============================================================ */
+
+const API_BASE_URL = "http://localhost:8080/api";
+
+// Store tracked caseId globally so chat functions can access it
+window._trackedCaseId = null;
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
@@ -15,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
         window.location.href = "../login.html"; return;
     }
 
-    // Helpers
+    // ─── HELPERS ─────────────────────────────────────────────────
     function formatStatus(status) {
         if (!status) return "";
         return status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
@@ -58,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
         loadDashboard();
 
         function loadDashboard() {
-            fetch(`http://localhost:8080/api/complaints/my/${currentUser.id}`)
+            fetch(`${API_BASE_URL}/complaints/my/${currentUser.id}`)
                 .then(res => {
                     if (!res.ok) throw new Error("Failed to fetch complaints");
                     return res.json();
@@ -88,7 +93,7 @@ document.addEventListener("DOMContentLoaded", function () {
             data.forEach(c => {
                 let feedbackBtn = '';
                 if (c.status === "RESOLVED") {
-                    fetch(`http://localhost:8080/api/feedback/${c.id}`).then(res => {
+                    fetch(`${API_BASE_URL}/feedback/${c.id}`).then(res => {
                         if (res.ok) {
                             res.json().then(f => {
                                 feedbackBtn = `<small class="text-warning">⭐ Rated ${f.rating}/5</small>`;
@@ -110,8 +115,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                     const formattedStatus = formatStatus(c.status);
                     const statusClass = formatStatusClass(c.status);
-                    let rowId = `row-${c.id}`;
-                    let existingRow = document.getElementById(rowId);
+                    const rowId = `row-${c.id}`;
+                    const existingRow = document.getElementById(rowId);
                     const rowHtml = `
                     <tr id="${rowId}">
                         <td><code style="font-size:12px;color:#6d28d9">${c.id}</code></td>
@@ -183,7 +188,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 formData.append("file", fileInput.files[0]);
 
                 try {
-                    const uploadRes = await fetch("http://localhost:8080/api/complaints/upload", {
+                    const uploadRes = await fetch(`${API_BASE_URL}/complaints/upload`, {
                         method: "POST",
                         body: formData  // No Content-Type header — browser sets it with boundary
                     });
@@ -191,7 +196,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (uploadRes.ok) {
                         const uploadData = await uploadRes.json();
                         evidenceFileName = uploadData.fileName;
-                        // Store original name for display purposes
                         window._uploadedOriginalName = uploadData.originalName;
                     } else {
                         showAlert("File upload failed, submitting without evidence.", "warning");
@@ -218,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 evidenceFileName  // null if no file, or UUID filename if uploaded
             };
 
-            fetch("http://localhost:8080/api/complaints", {
+            fetch(`${API_BASE_URL}/complaints`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(newComplaint)
@@ -256,7 +260,16 @@ window.trackComplaint = function () {
 
     result.innerHTML = `<div class="text-center text-muted py-3">Loading...</div>`;
 
-    fetch(`http://localhost:8080/api/complaints/${id}`)
+    // Store caseId globally so chat functions can access it
+    window._trackedCaseId = id;
+
+    // Stop any existing polling before starting new one
+    if (window.messagePollInterval) {
+        clearInterval(window.messagePollInterval);
+        window.messagePollInterval = null;
+    }
+
+    fetch(`${API_BASE_URL}/complaints/${id}`)
         .then(res => {
             if (!res.ok) throw new Error("Case not found");
             return res.json();
@@ -281,12 +294,13 @@ window.trackComplaint = function () {
                     ${formatStatus(s)}
                 </div>`).join(" → ");
 
-            fetch(`http://localhost:8080/api/audit-logs/${complaint.id}`)
+            fetch(`${API_BASE_URL}/audit-logs/${complaint.id}`)
                 .then(r => r.json())
                 .then(logs => renderResult(complaint, formattedStatus, statusClass, assignedName, timeline, logs))
                 .catch(() => renderResult(complaint, formattedStatus, statusClass, assignedName, timeline, []));
         })
         .catch(() => {
+            window._trackedCaseId = null;
             result.innerHTML = `<div class="alert-card alert-escalated">❌ Case not found. Please check the Case ID.</div>`;
         });
 }
@@ -315,7 +329,7 @@ function renderResult(complaint, formattedStatus, statusClass, assignedName, tim
     let feedbackSection = "";
     if (complaint.status === "RESOLVED") {
         feedbackSection = `<div id="fb-section-${complaint.id}" class="mt-3"><small class="text-muted">Loading feedback...</small></div>`;
-        fetch(`http://localhost:8080/api/feedback/${complaint.id}`).then(res => {
+        fetch(`${API_BASE_URL}/feedback/${complaint.id}`).then(res => {
             if (res.ok) {
                 res.json().then(f => {
                     const el = document.getElementById(`fb-section-${complaint.id}`);
@@ -347,17 +361,7 @@ function renderResult(complaint, formattedStatus, statusClass, assignedName, tim
         </div>`;
     }
 
-    const chats = JSON.parse(localStorage.getItem("chats")) || {};
-    const messages = (chats[complaint.id] || []).slice(-3);
-    const chatPreview = messages.length > 0
-        ? `<div class="mt-2">${messages.map(m => `
-            <div style="font-size:12px;padding:4px 8px;
-                background:${m.senderRole && m.senderRole.toUpperCase() === 'COMPLAINANT' ? '#ede9fe' : '#f0fdf4'};
-                border-radius:8px;margin-bottom:4px">
-                <strong>${m.senderName}:</strong> ${m.text}
-            </div>`).join("")}</div>`
-        : `<small class="text-muted">No messages yet.</small>`;
-
+    // Chat lives in #chatSection in track.html — not rendered here
     result.innerHTML = `
     <div class="row g-4">
         <div class="col-lg-7">
@@ -386,20 +390,18 @@ function renderResult(complaint, formattedStatus, statusClass, assignedName, tim
                 <div class="timeline mt-3">${timeline}</div>
                 ${historyHtml}
             </div>
-            <div class="case-card">
-                <h5>💬 Messages</h5>
-                <div style="font-size:13px">
-                    ${complaint.assignedTo
-                        ? chatPreview
-                        : '<small class="text-muted">Chat available once assigned.</small>'}
-                </div>
-            </div>
         </div>
     </div>`;
+
+    // Show the persistent chat section and initialize it
+    const chatSection = document.getElementById("chatSection");
+    if (chatSection) chatSection.style.display = "block";
+
+    initializeChat();
 }
 
 
-/* ─── FILE UPLOAD HANDLERS ───────────────────────────────────── */
+/* ─── FILE UPLOAD HANDLERS (evidence on submit form) ────────── */
 function handleFileSelect(input) {
     const file = input.files[0];
     if (!file) return;
@@ -488,7 +490,7 @@ window.submitFeedback = function (caseId) {
     if (rating === 0) { showAlert("Please select a rating", "danger"); return; }
 
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-    fetch("http://localhost:8080/api/feedback", {
+    fetch(`${API_BASE_URL}/feedback`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ caseId: parseInt(caseId), rating, comment, submittedById: currentUser.id })
@@ -501,4 +503,248 @@ window.submitFeedback = function (caseId) {
             res.json().then(data => showAlert(data.message || "Error submitting feedback", "danger"));
         }
     }).catch(() => showAlert("Server error", "danger"));
+}
+
+
+/* ─── CHAT — Backend API ─────────────────────────────────────── */
+
+async function loadChat(caseId, currentUser) {
+    const chatBox = document.getElementById("chatMessages");
+    if (!chatBox) return;
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/messages?complaintId=${caseId}&requestingUserId=${currentUser.id}`
+        );
+
+        if (!response.ok) throw new Error('Failed to load messages');
+
+        const messages = await response.json();
+        chatBox.innerHTML = "";
+
+        if (messages.length === 0) {
+            chatBox.innerHTML = `<div style="text-align:center;color:#aaa;font-size:13px;margin-top:20px">No messages yet. Messages will appear once the committee member responds.</div>`;
+            return;
+        }
+
+        // Group messages by date
+        const grouped = {};
+        messages.forEach(msg => {
+            const dateKey = formatMessageDate(msg.createdAt);
+            if (!grouped[dateKey]) grouped[dateKey] = [];
+            grouped[dateKey].push(msg);
+        });
+
+        Object.entries(grouped).forEach(([date, dayMsgs]) => {
+            chatBox.innerHTML += `<div class="date-separator">${date}</div>`;
+            dayMsgs.forEach(msg => {
+                const isSent = msg.senderRole === "COMPLAINANT";
+                const isSystem = msg.messageType === "SYSTEM";
+
+                if (isSystem) {
+                    chatBox.innerHTML += `
+                        <div class="system-message">
+                            <i class="bi bi-info-circle"></i> ${escapeHtml(msg.text)}
+                        </div>`;
+                } else {
+                    const senderName = isSent ? "You" : (msg.sender?.name || "Committee Member");
+                    chatBox.innerHTML += `
+                        <div class="chat-msg ${isSent ? 'sent' : 'received'}">
+                            <div class="msg-sender">${escapeHtml(senderName)}</div>
+                            <div class="msg-text">${escapeHtml(msg.text || '')}</div>
+                            ${msg.fileName ? `
+                                <div class="msg-attachment">
+                                    <a href="${API_BASE_URL}/messages/${msg.id}/attachment"
+                                       target="_blank" class="attachment-link">
+                                        <i class="bi bi-paperclip"></i> ${escapeHtml(msg.fileName)}
+                                        ${msg.fileSize ? `<small>(${formatBytes(msg.fileSize)})</small>` : ''}
+                                    </a>
+                                </div>
+                            ` : ''}
+                            <div class="msg-time">
+                                ${formatMessageTime(msg.createdAt)}
+                                ${isSent ? (msg.readByCommittee ? '✓✓' : '✓') : ''}
+                            </div>
+                        </div>`;
+                }
+            });
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+    } catch (error) {
+        console.error('Error loading chat:', error);
+        const chatBox = document.getElementById("chatMessages");
+        if (chatBox) chatBox.innerHTML = `<div style="text-align:center;color:#dc2626;font-size:13px;margin-top:20px">
+            Failed to load messages. Please refresh the page.
+        </div>`;
+    }
+}
+
+window.sendChatMessage = async function () {
+    const input = document.getElementById("chatInput");
+    if (!input || !input.value.trim()) return;
+
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    const caseId = window._trackedCaseId;
+
+    if (!caseId) {
+        showAlert("No case loaded. Please track a complaint first.", "warning");
+        return;
+    }
+    if (!currentUser) return;
+
+    const text = input.value.trim();
+    const sendBtn = document.querySelector('.chat-send-btn');
+
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<div class="spinner-border spinner-border-sm" style="width:16px;height:16px"></div>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/messages/text`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                complaintId: parseInt(caseId),
+                senderId: currentUser.id,
+                senderRole: "COMPLAINANT",
+                text: text
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to send message');
+        }
+
+        input.value = "";
+        await loadChat(caseId, currentUser);
+
+    } catch (error) {
+        console.error('Error sending message:', error);
+        showAlert(error.message || 'Failed to send message', 'danger');
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+    }
+};
+
+function startMessagePolling(caseId, currentUser) {
+    if (window.messagePollInterval) clearInterval(window.messagePollInterval);
+    window.messagePollInterval = setInterval(() => {
+        if (caseId && currentUser && document.getElementById("chatMessages")) {
+            loadChat(caseId, currentUser);
+        }
+    }, 5000);
+}
+
+function addComplainantFileUpload() {
+    const chatInputArea = document.querySelector('.chat-input-area');
+    if (chatInputArea && !document.getElementById('complainantFileUploadBtn')) {
+        const fileBtn = document.createElement('button');
+        fileBtn.id = 'complainantFileUploadBtn';
+        fileBtn.innerHTML = '<i class="bi bi-paperclip"></i>';
+        fileBtn.onclick = () => document.getElementById('complainantFileInput').click();
+        fileBtn.style.cssText = 'background:none;border:none;color:#6b7280;padding:0 8px;cursor:pointer;font-size:16px;';
+
+        const fileInput = document.createElement('input');
+        fileInput.id = 'complainantFileInput';
+        fileInput.type = 'file';
+        fileInput.style.display = 'none';
+        fileInput.accept = 'image/*,.pdf,.doc,.docx,.txt';
+        fileInput.onchange = uploadComplainantFileMessage;
+
+        chatInputArea.insertBefore(fileBtn, chatInputArea.firstChild);
+        chatInputArea.appendChild(fileInput);
+    }
+}
+
+async function uploadComplainantFileMessage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+        showAlert("File size must be less than 10MB", "danger");
+        return;
+    }
+
+    const caseId = window._trackedCaseId;
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+
+    if (!caseId) {
+        showAlert("No case loaded. Please track a complaint first.", "warning");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("complaintId", caseId);
+    formData.append("senderId", currentUser.id);
+    formData.append("senderRole", "COMPLAINANT");
+    formData.append("file", file);
+
+    const sendBtn = document.querySelector('.chat-send-btn');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<div class="spinner-border spinner-border-sm"></div>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/messages/file`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) throw new Error('Upload failed');
+
+        showAlert("File uploaded successfully", "success");
+        await loadChat(caseId, currentUser);
+
+    } catch (error) {
+        console.error('Error uploading file:', error);
+        showAlert("Failed to upload file", "danger");
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+        event.target.value = '';
+    }
+}
+
+function initializeChat() {
+    const caseId = window._trackedCaseId;
+    if (caseId && document.getElementById("chatMessages")) {
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+        loadChat(caseId, currentUser);
+        startMessagePolling(caseId, currentUser);
+        addComplainantFileUpload();
+    }
+}
+
+
+/* ─── CHAT HELPER FUNCTIONS ──────────────────────────────────── */
+function formatMessageTime(iso) {
+    if (!iso) return "";
+    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatMessageDate(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return "Today";
+    if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatBytes(bytes) {
+    if (!bytes) return "";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }

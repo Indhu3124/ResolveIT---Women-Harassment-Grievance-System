@@ -1,20 +1,21 @@
 /* ============================================================
    resolveIT — committee.js
-   FIXED: Role comparison uses toUpperCase() to work with
-          backend returning "COMMITTEE" not "committee"
-   CHANGED: Evidence file section now renders in case details —
-            images inline, PDFs in iframe, others as download.
-            Incident details section also now renders.
+   MERGED: Your features (evidence, incident details, status
+           update, report generation, timeline, feedback)
+   + Her features (backend API chat replacing localStorage,
+     date grouping, system messages, file attachments in chat)
 ============================================================ */
+
+const API_BASE_URL = "http://localhost:8080/api";
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-    // FIX: use toUpperCase() for role comparison
     if (!currentUser || currentUser.role.toUpperCase() !== "COMMITTEE") {
         window.location.href = "../login.html"; return;
     }
 
-    // Helpers
+    // ─── HELPERS ─────────────────────────────────────────────────
     function formatStatus(status) {
         if (!status) return "";
         return status.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
@@ -47,13 +48,13 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     window.showAlert = showAlert;
 
-    // ─── DASHBOARD ───
+    // ─── DASHBOARD ───────────────────────────────────────────────
     const table = document.getElementById("committeeTable");
     if (table) {
         loadDashboard();
 
         function loadDashboard() {
-            fetch(`http://localhost:8080/api/committee/cases/${currentUser.id}`)
+            fetch(`${API_BASE_URL}/committee/cases/${currentUser.id}`)
                 .then(res => {
                     if (!res.ok) throw new Error("Failed to fetch assigned cases");
                     return res.json();
@@ -61,15 +62,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 .then(data => {
                     if (!Array.isArray(data)) data = [];
 
-                    const totalEl = document.getElementById("totalCases");
-                    const reviewEl = document.getElementById("reviewCases");
+                    const totalEl    = document.getElementById("totalCases");
+                    const reviewEl   = document.getElementById("reviewCases");
                     const resolvedEl = document.getElementById("resolvedCases");
-                    const escalEl = document.getElementById("escalatedCases");
+                    const escalEl    = document.getElementById("escalatedCases");
 
-                    if (totalEl) animateCounter(totalEl, data.length);
-                    if (reviewEl) animateCounter(reviewEl, data.filter(c => c.status === "UNDER_REVIEW").length);
+                    if (totalEl)    animateCounter(totalEl,    data.length);
+                    if (reviewEl)   animateCounter(reviewEl,   data.filter(c => c.status === "UNDER_REVIEW").length);
                     if (resolvedEl) animateCounter(resolvedEl, data.filter(c => c.status === "RESOLVED").length);
-                    if (escalEl) animateCounter(escalEl, data.filter(c => c.status === "ESCALATED").length);
+                    if (escalEl)    animateCounter(escalEl,    data.filter(c => c.status === "ESCALATED").length);
 
                     const sidebarBadge = document.getElementById("assignedBadge");
                     if (sidebarBadge) {
@@ -91,7 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             data.forEach(c => {
                 const fStatus = formatStatus(c.status);
-                const sClass = formatStatusClass(c.status);
+                const sClass  = formatStatusClass(c.status);
                 table.innerHTML += `
                 <tr>
                     <td><code style="font-size:12px;color:#6d28d9">${c.id}</code></td>
@@ -121,12 +122,12 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    // ─── CASE DETAILS PAGE ───
+    // ─── CASE DETAILS PAGE ───────────────────────────────────────
     const urlParams = new URLSearchParams(window.location.search);
     const caseId = urlParams.get("id");
 
     if (caseId) {
-        fetch(`http://localhost:8080/api/complaints/${caseId}`)
+        fetch(`${API_BASE_URL}/complaints/${caseId}`)
             .then(res => {
                 if (!res.ok) throw new Error("Case not found");
                 return res.json();
@@ -139,20 +140,20 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
 
                 const populate = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
-                populate("caseTitle", complaint.title);
-                populate("caseId", complaint.id);
-                populate("caseDate", new Date(complaint.createdAt).toLocaleDateString());
-                populate("casePriority", complaint.priority);
+                populate("caseTitle",       complaint.title);
+                populate("caseId",          complaint.id);
+                populate("caseDate",        new Date(complaint.createdAt).toLocaleDateString());
+                populate("casePriority",    complaint.priority);
                 populate("caseDescription", complaint.description);
-                populate("caseType", complaint.type || "N/A");
+                populate("caseType",        complaint.type || "N/A");
 
                 const formattedStatus = formatStatus(complaint.status);
-                const statusClass = formatStatusClass(complaint.status);
+                const statusClass     = formatStatusClass(complaint.status);
 
                 const statusEl = document.getElementById("caseStatus");
                 if (statusEl) {
-                    statusEl.innerText = formattedStatus;
-                    statusEl.className = `status-badge status-${statusClass}`;
+                    statusEl.innerText   = formattedStatus;
+                    statusEl.className   = `status-badge status-${statusClass}`;
                 }
 
                 const statusSelect = document.getElementById("statusUpdate");
@@ -160,16 +161,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 activateTimeline(complaint.status);
 
-                // ── EVIDENCE FILE — renders image inline, PDF in iframe, others as download
-                const evidenceSection = document.getElementById("evidenceSection");
+                // ── EVIDENCE FILE ─────────────────────────────────
+                const evidenceSection     = document.getElementById("evidenceSection");
                 const evidenceFileDisplay = document.getElementById("evidenceFileDisplay");
                 if (evidenceSection && evidenceFileDisplay) {
                     if (complaint.evidenceFileName) {
                         evidenceSection.style.display = "block";
-                        const fileUrl = `http://localhost:8080/api/complaints/files/${complaint.evidenceFileName}`;
-                        const ext = complaint.evidenceFileName.split('.').pop().toLowerCase();
+                        const fileUrl = `${API_BASE_URL}/complaints/files/${complaint.evidenceFileName}`;
+                        const ext     = complaint.evidenceFileName.split('.').pop().toLowerCase();
                         const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
-                        const isPdf = ext === "pdf";
+                        const isPdf   = ext === "pdf";
 
                         if (isImage) {
                             evidenceFileDisplay.innerHTML = `
@@ -226,31 +227,33 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
-                // ── INCIDENT DETAILS
-                const incidentSection = document.getElementById("incidentSection");
+                // ── INCIDENT DETAILS ──────────────────────────────
+                const incidentSection        = document.getElementById("incidentSection");
                 const incidentDetailsDisplay = document.getElementById("incidentDetailsDisplay");
                 if (incidentSection && incidentDetailsDisplay) {
                     if (complaint.incidentLocation || complaint.incidentDate || complaint.incidentTime) {
                         incidentSection.style.display = "block";
                         incidentDetailsDisplay.innerHTML = `
                             ${complaint.incidentLocation ? `<p class="mb-1"><i class="bi bi-geo-alt me-1"></i><strong>Location:</strong> ${complaint.incidentLocation}</p>` : ''}
-                            ${complaint.incidentDate ? `<p class="mb-1"><i class="bi bi-calendar me-1"></i><strong>Date:</strong> ${complaint.incidentDate}</p>` : ''}
-                            ${complaint.incidentTime ? `<p class="mb-1"><i class="bi bi-clock me-1"></i><strong>Time:</strong> ${complaint.incidentTime}</p>` : ''}`;
+                            ${complaint.incidentDate     ? `<p class="mb-1"><i class="bi bi-calendar me-1"></i><strong>Date:</strong> ${complaint.incidentDate}</p>` : ''}
+                            ${complaint.incidentTime     ? `<p class="mb-1"><i class="bi bi-clock me-1"></i><strong>Time:</strong> ${complaint.incidentTime}</p>` : ''}`;
                     } else {
                         incidentSection.style.display = "none";
                     }
                 }
 
-                // Feedback
+                // ── FEEDBACK ──────────────────────────────────────
                 if (complaint.status === "RESOLVED") {
-                    fetch(`http://localhost:8080/api/feedback/${caseId}`).then(r => {
+                    fetch(`${API_BASE_URL}/feedback/${caseId}`).then(r => {
                         if (r.ok) {
                             r.json().then(f => {
                                 const fa = document.getElementById("feedbackArea");
                                 if (fa) fa.innerHTML = `
-                                    <div class="feedback-card"><h6>⭐ Complainant Feedback</h6>
-                                    <div class="feedback-display-stars">${"⭐".repeat(f.rating)}</div>
-                                    <p style="font-size:13px">${f.comment || "No comment"}</p></div>`;
+                                    <div class="feedback-card">
+                                        <h6>⭐ Complainant Feedback</h6>
+                                        <div class="feedback-display-stars">${"⭐".repeat(f.rating)}</div>
+                                        <p style="font-size:13px">${f.comment || "No comment"}</p>
+                                    </div>`;
                             });
                         } else {
                             const fa = document.getElementById("feedbackArea");
@@ -262,6 +265,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     if (feedbackArea) feedbackArea.innerHTML = `<p class="text-muted" style="font-size:13px">No feedback yet.</p>`;
                 }
 
+                // Load chat using backend API
                 loadChat(caseId, currentUser);
                 window._currentComplaint = complaint;
             })
@@ -271,7 +275,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
     }
 
-    // ─── STATUS UPDATE ───
+    // ─── STATUS UPDATE ───────────────────────────────────────────
     window.updateStatus = function () {
         const newStatus = document.getElementById("statusUpdate").value;
         if (!newStatus) { showAlert("Select a status", "danger"); return; }
@@ -281,7 +285,7 @@ document.addEventListener("DOMContentLoaded", function () {
         updateBtn.innerHTML = "Updating...";
         updateBtn.disabled = true;
 
-        fetch(`http://localhost:8080/api/committee/cases/${caseId}/status`, {
+        fetch(`${API_BASE_URL}/committee/cases/${caseId}/status`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: newStatus, performedById: currentUser.id })
@@ -316,6 +320,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 });
 
+// ─── TIMELINE ────────────────────────────────────────────────
 function activateTimeline(status) {
     const statusOrder = ["SUBMITTED", "UNDER_REVIEW", "IN_INVESTIGATION", "RESOLVED"];
     const idx = statusOrder.indexOf(status);
@@ -330,29 +335,76 @@ function activateTimeline(status) {
     if (escEl) escEl.classList.toggle("active", status === "ESCALATED");
 }
 
-function loadChat(caseId, currentUser) {
+// ─── CHAT — Backend API ───────────────────────────────────────
+async function loadChat(caseId, currentUser) {
     const chatBox = document.getElementById("chatMessages");
     if (!chatBox) return;
-    const chats = JSON.parse(localStorage.getItem("chats")) || {};
-    const messages = chats[caseId] || [];
-    chatBox.innerHTML = "";
-    if (messages.length === 0) {
-        chatBox.innerHTML = `<div style="text-align:center;color:#aaa;font-size:13px;margin-top:20px">No messages yet.</div>`;
-        return;
-    }
-    messages.forEach(msg => {
-        const isSent = msg.senderId === currentUser.id;
-        chatBox.innerHTML += `
-        <div class="chat-msg ${isSent ? 'sent' : 'received'}">
-            <div class="msg-sender">${msg.senderName}</div>
-            <div>${msg.text}</div>
-            <div class="msg-time">${msg.time}</div>
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/messages?complaintId=${caseId}&requestingUserId=${currentUser.id}`
+        );
+
+        if (!response.ok) throw new Error('Failed to load messages');
+
+        const messages = await response.json();
+        chatBox.innerHTML = "";
+
+        if (messages.length === 0) {
+            chatBox.innerHTML = `<div style="text-align:center;color:#aaa;font-size:13px;margin-top:20px">No messages yet.</div>`;
+            return;
+        }
+
+        // Group messages by date
+        const grouped = {};
+        messages.forEach(msg => {
+            const dateKey = formatMessageDate(msg.createdAt);
+            if (!grouped[dateKey]) grouped[dateKey] = [];
+            grouped[dateKey].push(msg);
+        });
+
+        Object.entries(grouped).forEach(([date, dayMsgs]) => {
+            chatBox.innerHTML += `<div class="date-separator">${date}</div>`;
+            dayMsgs.forEach(msg => {
+                const isSent  = msg.senderId === currentUser.id;
+                const isSystem = msg.messageType === "SYSTEM";
+
+                if (isSystem) {
+                    chatBox.innerHTML += `
+                        <div class="system-message">
+                            <i class="bi bi-info-circle"></i> ${escapeHtml(msg.text)}
+                        </div>`;
+                } else {
+                    chatBox.innerHTML += `
+                        <div class="chat-msg ${isSent ? 'sent' : 'received'}">
+                            <div class="msg-sender">${escapeHtml(msg.sender?.name || (isSent ? currentUser.name : 'Complainant'))}</div>
+                            <div class="msg-text">${escapeHtml(msg.text || '')}</div>
+                            ${msg.fileName ? `
+                                <div class="msg-attachment">
+                                    <a href="${API_BASE_URL}/messages/${msg.id}/attachment"
+                                       target="_blank" class="attachment-link">
+                                        <i class="bi bi-paperclip"></i> ${escapeHtml(msg.fileName)}
+                                        ${msg.fileSize ? `<small>(${formatBytes(msg.fileSize)})</small>` : ''}
+                                    </a>
+                                </div>
+                            ` : ''}
+                            <div class="msg-time">${formatMessageTime(msg.createdAt)}</div>
+                        </div>`;
+                }
+            });
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+    } catch (error) {
+        console.error('Error loading chat:', error);
+        if (chatBox) chatBox.innerHTML = `<div style="text-align:center;color:#dc2626;font-size:13px;margin-top:20px">
+            Failed to load messages. Please refresh the page.
         </div>`;
-    });
-    chatBox.scrollTop = chatBox.scrollHeight;
+    }
 }
 
-window.sendChatMessage = function () {
+window.sendChatMessage = async function () {
     const input = document.getElementById("chatInput");
     if (!input || !input.value.trim()) return;
 
@@ -360,19 +412,68 @@ window.sendChatMessage = function () {
     const caseId = new URLSearchParams(window.location.search).get("id");
     if (!caseId || !currentUser) return;
 
-    const msg = {
-        senderId: currentUser.id,
-        senderName: currentUser.name,
-        senderRole: currentUser.role,
-        text: input.value.trim(),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+    const text = input.value.trim();
+    const sendBtn = document.querySelector('.chat-send-btn');
 
-    let chats = JSON.parse(localStorage.getItem("chats")) || {};
-    if (!chats[caseId]) chats[caseId] = [];
-    chats[caseId].push(msg);
-    localStorage.setItem("chats", JSON.stringify(chats));
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<div class="spinner-border spinner-border-sm" style="width:16px;height:16px"></div>';
 
-    input.value = "";
-    loadChat(caseId, currentUser);
+    try {
+        const response = await fetch(`${API_BASE_URL}/messages/text`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                complaintId: parseInt(caseId),
+                senderId: currentUser.id,
+                senderRole: "COMMITTEE",
+                text: text
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Failed to send message');
+        }
+
+        input.value = "";
+        await loadChat(caseId, currentUser);
+
+    } catch (error) {
+        console.error('Error sending message:', error);
+        showAlert(error.message || 'Failed to send message', 'danger');
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="bi bi-send-fill"></i>';
+    }
+};
+
+// ─── CHAT HELPER FUNCTIONS ────────────────────────────────────
+function formatMessageTime(iso) {
+    if (!iso) return "";
+    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatMessageDate(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return "Today";
+    if (d.toDateString() === yesterday.toDateString()) return "Yesterday";
+    return d.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatBytes(bytes) {
+    if (!bytes) return "";
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+function escapeHtml(text) {
+    if (!text) return "";
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
