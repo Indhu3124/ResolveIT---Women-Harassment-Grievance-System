@@ -36,82 +36,67 @@
                 </a>
             </div>
 
-            <!-- CASE HEADER CARD -->
-            <div class="premium-card">
-                <div class="case-header">
-                    <div>
-                        <h3 id="caseTitle" class="mb-1"></h3>
-                        <p class="text-muted mb-0" style="font-size:13px">Case ID: <code id="caseId"></code></p>
-                    </div>
-                    <span class="case-status-badge" id="caseStatus"></span>
-                </div>
+            <!-- ── ROW 1: Case info (left col-8) + Side panel (right col-4) ── -->
+            <div class="row g-4 mb-4">
 
-                <div class="case-meta-grid">
-                    <div><label>Date Filed</label><p id="caseDate"></p></div>
-                    <div><label>Priority</label><p id="casePriority"></p></div>
-                    <div><label>Type</label><p id="caseType"></p></div>
-                    <div><label>Assigned To</label><p id="assignedMemberName"></p></div>
-                    <div><label>Complainant</label><p id="complainantName"></p></div>
-                </div>
-
-                <hr>
-
-                <div class="case-description">
-                    <h6 class="fw-semibold mb-2"><i class="bi bi-card-text me-1"></i> Description</h6>
-                    <p id="caseDescription" style="line-height:1.8;color:#4b5563"></p>
-                </div>
-
-                <!-- EVIDENCE FILE SECTION — shown only if file was uploaded -->
-                <div id="evidenceSection" style="display:none">
-                    <hr>
-                    <h6 class="fw-semibold mb-2">
-                        <i class="bi bi-paperclip me-1"></i> Evidence File
-                    </h6>
-                    <div id="evidenceFileDisplay"></div>
-                </div>
-
-                <!-- INCIDENT DETAILS SECTION — shown only if any filled -->
-                <div id="incidentSection" style="display:none">
-                    <hr>
-                    <h6 class="fw-semibold mb-2">
-                        <i class="bi bi-geo-alt me-1"></i> Incident Details
-                    </h6>
-                    <div id="incidentDetailsDisplay" style="font-size:13px;color:#4b5563"></div>
-                </div>
-            </div>
-
-            <!-- STATUS TIMELINE -->
-            <div class="premium-card">
-                <h5 class="mb-3"><i class="bi bi-bar-chart-steps me-2"></i>Case Progress</h5>
-                <div class="timeline">
-                    <div class="timeline-item active" id="tl-Submitted">Submitted</div>
-                    <div style="color:#ccc">→</div>
-                    <div class="timeline-item" id="tl-UnderReview">Under Review</div>
-                    <div style="color:#ccc">→</div>
-                    <div class="timeline-item" id="tl-InInvestigation">In Investigation</div>
-                    <div style="color:#ccc">→</div>
-                    <div class="timeline-item" id="tl-Resolved">Resolved</div>
-                    <div class="timeline-item" id="tl-Escalated" style="background:#fee2e2;color:#991b1b;display:none">Escalated</div>
-                </div>
-            </div>
-
-            <div class="row">
-                <!-- ASSIGN CASE -->
-                <div class="col-lg-6 mb-4">
+                <!-- LEFT: Case header, meta, description, incident details -->
+                <div class="col-lg-8">
                     <div class="premium-card h-100">
-                        <h5 class="mb-3"><i class="bi bi-person-check-fill me-2"></i>Assign Case</h5>
+
+                        <div class="case-header">
+                            <div>
+                                <h3 id="caseTitle" class="mb-1"></h3>
+                                <p class="text-muted mb-0" style="font-size:13px">Case ID: <code id="caseId"></code></p>
+                            </div>
+                            <span class="case-status-badge" id="caseStatus"></span>
+                        </div>
+
+                        <div class="case-meta-grid">
+                            <div><label>Date Filed</label><p id="caseDate"></p></div>
+                            <div><label>Priority</label><p id="casePriority"></p></div>
+                            <div><label>Type</label><p id="caseType"></p></div>
+                            <div><label>Assigned To</label><p id="assignedMemberName"></p></div>
+                            <div><label>Complainant</label><p id="complainantName"></p></div>
+                        </div>
+
+                        <hr>
+
+                        <div class="case-description">
+                            <h6 class="fw-semibold mb-2"><i class="bi bi-card-text me-1"></i> Description</h6>
+                            <p id="caseDescription" style="line-height:1.8;color:#4b5563"></p>
+                        </div>
+
+                        <!-- INCIDENT DETAILS — shown only if any filled -->
+                        <div id="incidentSection" style="display:none">
+                            <hr>
+                            <h6 class="fw-semibold mb-2"><i class="bi bi-geo-alt me-1"></i> Incident Details</h6>
+                            <div id="incidentDetailsDisplay" style="font-size:13px;color:#4b5563"></div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- RIGHT: Assign + Status + Evidence — stacked -->
+                <div class="col-lg-4 d-flex flex-column gap-4">
+
+                    <!-- ASSIGN SECTION — JS controls visibility -->
+                    <div class="premium-card" id="assignSection">
+                        <h5 class="mb-2" id="assignSectionTitle">
+                            <i class="bi bi-person-plus-fill me-2"></i>Assign Case
+                        </h5>
+                        <div id="currentAssignInfo"></div>
                         <label class="form-label">Select Committee Member</label>
                         <select id="assignMember" class="form-select mb-3"></select>
                         <button class="custom-btn w-100" onclick="assignCase()">
-                            Assign to Committee Member
+                            <i class="bi bi-person-check me-1"></i> Assign to Committee Member
                         </button>
                     </div>
-                </div>
 
-                <!-- STATUS CONTROL -->
-                <div class="col-lg-6 mb-4">
-                    <div class="premium-card h-100">
-                        <h5 class="mb-3"><i class="bi bi-arrow-repeat me-2"></i>Update Case Status</h5>
+                    <!-- STATUS SECTION — JS shows only for ESCALATED, hidden otherwise -->
+                    <div class="premium-card" id="statusSection" style="display:none">
+                        <h5 class="mb-3">
+                            <i class="bi bi-arrow-repeat me-2"></i>Update Case Status
+                        </h5>
                         <label class="form-label">New Status</label>
                         <select id="statusControl" class="form-select mb-3">
                             <option value="Under Review">Under Review</option>
@@ -123,13 +108,42 @@
                             Update Status
                         </button>
                     </div>
+
+                    <!-- EVIDENCE FILE — shown only if file was uploaded -->
+                    <div class="premium-card" id="evidenceSection" style="display:none">
+                        <h6 class="fw-semibold mb-3"><i class="bi bi-paperclip me-1"></i> Evidence File</h6>
+                        <div id="evidenceFileDisplay"></div>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- FEEDBACK -->
-            <div class="premium-card">
-                <h5 class="mb-3"><i class="bi bi-star-fill me-2 text-warning"></i>Complainant Feedback</h5>
-                <div id="feedbackContainer"></div>
+            <!-- ── ROW 2: Timeline + Feedback side by side ── -->
+            <div class="row g-4">
+
+                <div class="col-lg-6">
+                    <div class="premium-card h-100">
+                        <h5 class="mb-3"><i class="bi bi-bar-chart-steps me-2"></i>Case Progress</h5>
+                        <div class="timeline flex-wrap">
+                            <div class="timeline-item active" id="tl-Submitted">Submitted</div>
+                            <div style="color:#ccc">→</div>
+                            <div class="timeline-item" id="tl-UnderReview">Under Review</div>
+                            <div style="color:#ccc">→</div>
+                            <div class="timeline-item" id="tl-InInvestigation">In Investigation</div>
+                            <div style="color:#ccc">→</div>
+                            <div class="timeline-item" id="tl-Resolved">Resolved</div>
+                            <div class="timeline-item" id="tl-Escalated" style="background:#fee2e2;color:#991b1b;display:none">Escalated</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="premium-card h-100">
+                        <h5 class="mb-3"><i class="bi bi-star-fill me-2 text-warning"></i>Complainant Feedback</h5>
+                        <div id="feedbackContainer"></div>
+                    </div>
+                </div>
+
             </div>
 
         </div>

@@ -5,6 +5,13 @@
    Escalation reassignment supported.
    CHANGED: Evidence file section now renders images inline,
             PDFs in an iframe, and other files as download link.
+   LOGIC FIXES (case details only):
+   1. Assign section: hidden if case is RESOLVED. 
+      Shows "Re-assign" label if already assigned, "Assign" if not.
+   2. Update Status section: REMOVED for admin — committee's job.
+      EXCEPTION: shown only if status is ESCALATED so admin can
+      reassign to a new committee member.
+   3. RESOLVED cases: status control is locked/hidden entirely.
 ============================================================ */
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -48,7 +55,6 @@ document.addEventListener("DOMContentLoaded", function () {
         loadDashboard();
 
         function loadDashboard() {
-            // Stats
             fetch("http://localhost:8080/api/admin/dashboard")
                 .then(r => r.json())
                 .then(s => {
@@ -60,7 +66,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
                 .catch(e => console.warn("Dashboard stats:", e));
 
-            // Cases table
             fetch("http://localhost:8080/api/complaints")
                 .then(r => { if (!r.ok) throw new Error("Failed"); return r.json(); })
                 .then(data => {
@@ -72,7 +77,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
                 .catch(e => console.error("Complaints:", e));
 
-            // Feedback summary — loads from backend
             fetch("http://localhost:8080/api/feedback")
                 .then(r => r.ok ? r.json() : [])
                 .then(feedbacks => {
@@ -83,7 +87,6 @@ document.addEventListener("DOMContentLoaded", function () {
                         return;
                     }
                     const avg = (feedbacks.reduce((sum, f) => sum + f.rating, 0) / feedbacks.length).toFixed(1);
-                    const stars = "⭐".repeat(Math.round(avg));
                     fs.innerHTML = `
                     <div class="d-flex align-items-center gap-4 flex-wrap mb-3">
                         <div class="text-center">
@@ -320,14 +323,68 @@ document.addEventListener("DOMContentLoaded", function () {
                 const assignedEl = document.getElementById("assignedMemberName");
                 if (assignedEl) assignedEl.innerText = c.assignedTo ? c.assignedTo.name : "Not assigned yet";
 
-                // Status dropdown
+                // ── LOGIC FIX 1: ASSIGN SECTION ──────────────────
+                const assignSection = document.getElementById("assignSection");
+                if (assignSection) {
+                    if (c.status === "RESOLVED") {
+                        assignSection.style.display = "none";
+                    } else {
+                        assignSection.style.display = "block";
+                        const assignTitle = document.getElementById("assignSectionTitle");
+                        const assignBtn = document.querySelector('button[onclick="assignCase()"]');
+                        if (c.assignedTo) {
+                            if (assignTitle) assignTitle.innerHTML = `<i class="bi bi-person-check-fill me-2"></i>Re-assign Case`;
+                            if (assignBtn) assignBtn.innerHTML = `<i class="bi bi-person-fill-gear me-1"></i> Re-assign to Different Member`;
+                            const currentAssignInfo = document.getElementById("currentAssignInfo");
+                            if (currentAssignInfo) {
+                                currentAssignInfo.innerHTML = `
+                                <div class="alert alert-success d-flex align-items-center mb-3 p-2" style="border-radius:10px;font-size:13px">
+                                    <i class="bi bi-person-check-fill me-2 fs-5"></i>
+                                    <div>Currently assigned to <strong>${c.assignedTo.name}</strong>
+                                    <span class="text-muted">(${c.assignedTo.department || 'Committee'})</span></div>
+                                </div>`;
+                            }
+                        } else {
+                            if (assignTitle) assignTitle.innerHTML = `<i class="bi bi-person-plus-fill me-2"></i>Assign Case`;
+                            if (assignBtn) assignBtn.innerHTML = `<i class="bi bi-person-check me-1"></i> Assign to Committee Member`;
+                            const currentAssignInfo = document.getElementById("currentAssignInfo");
+                            if (currentAssignInfo) {
+                                currentAssignInfo.innerHTML = `
+                                <div class="alert alert-warning d-flex align-items-center mb-3 p-2" style="border-radius:10px;font-size:13px">
+                                    <i class="bi bi-person-x me-2"></i> Not yet assigned to any committee member
+                                </div>`;
+                            }
+                        }
+                    }
+                }
+
+                // ── LOGIC FIX 2: STATUS CONTROL SECTION ──────────
+                const statusSection = document.getElementById("statusSection");
+                if (statusSection) {
+                    const isEscalated = c.status === "ESCALATED";
+                    const isResolved  = c.status === "RESOLVED";
+
+                    if (isResolved) {
+                        statusSection.style.display = "none";
+                    } else if (isEscalated) {
+                        statusSection.style.display = "block";
+                        statusSection.style.border = "2px solid #ef4444";
+                        statusSection.style.borderRadius = "14px";
+                        statusSection.style.padding = "16px";
+                        const statusTitle = statusSection.querySelector("h5");
+                        if (statusTitle) statusTitle.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2 text-danger"></i>Escalated Case — Admin Action Required`;
+                    } else {
+                        statusSection.style.display = "none";
+                    }
+                }
+
                 const statusControl = document.getElementById("statusControl");
                 if (statusControl && c.status) {
                     const statusMap = { "UNDER_REVIEW": "Under Review", "IN_INVESTIGATION": "In Investigation", "RESOLVED": "Resolved", "ESCALATED": "Escalated" };
                     statusControl.value = statusMap[c.status] || "Under Review";
                 }
 
-                // ── EVIDENCE FILE — renders image inline, PDF in iframe, others as download
+                // ── EVIDENCE FILE ─────────────────────────────────
                 const evidenceSection = document.getElementById("evidenceSection");
                 const evidenceFileDisplay = document.getElementById("evidenceFileDisplay");
                 if (evidenceSection && evidenceFileDisplay) {
@@ -336,18 +393,20 @@ document.addEventListener("DOMContentLoaded", function () {
                         const fileUrl = `http://localhost:8080/api/complaints/files/${c.evidenceFileName}`;
                         const ext = c.evidenceFileName.split('.').pop().toLowerCase();
                         const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
-                        const isPdf = ext === "pdf";
+                        const isPdf   = ext === "pdf";
 
                         if (isImage) {
                             evidenceFileDisplay.innerHTML = `
-                            <div style="margin-top:8px">
+                            <div>
                                 <img src="${fileUrl}" alt="Evidence"
-                                     style="max-width:100%;max-height:400px;border-radius:10px;border:1px solid #e5e7eb;object-fit:contain;"
+                                     style="max-width:100%;max-height:220px;border-radius:10px;border:1px solid #e5e7eb;object-fit:contain;cursor:pointer;"
+                                     onclick="window.open(this.src,'_blank')"
+                                     title="Click to view full size"
                                      onerror="this.outerHTML='<div class=text-danger style=font-size:13px><i class=bi bi-exclamation-circle me-1></i>Image could not be loaded.</div>'"
                                 />
                                 <div class="mt-2 d-flex gap-2">
                                     <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:20px;font-size:12px">
-                                        <i class="bi bi-box-arrow-up-right me-1"></i> Open in new tab
+                                        <i class="bi bi-box-arrow-up-right me-1"></i> Open full size
                                     </a>
                                     <a href="${fileUrl}" download class="btn btn-sm btn-outline-secondary" style="border-radius:20px;font-size:12px">
                                         <i class="bi bi-download me-1"></i> Download
@@ -356,8 +415,8 @@ document.addEventListener("DOMContentLoaded", function () {
                             </div>`;
                         } else if (isPdf) {
                             evidenceFileDisplay.innerHTML = `
-                            <div style="margin-top:8px">
-                                <iframe src="${fileUrl}" width="100%" height="400px"
+                            <div>
+                                <iframe src="${fileUrl}" width="100%" height="300px"
                                         style="border-radius:10px;border:1px solid #e5e7eb" title="Evidence PDF">
                                 </iframe>
                                 <div class="mt-2 d-flex gap-2">
@@ -393,7 +452,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     }
                 }
 
-                // Incident details — unchanged
+                // ── INCIDENT DETAILS ──────────────────────────────
                 const incidentSection = document.getElementById("incidentSection");
                 const incidentDetailsDisplay = document.getElementById("incidentDetailsDisplay");
                 if (incidentSection && incidentDetailsDisplay) {
@@ -410,7 +469,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 activateTimeline(c.status);
 
-                // Feedback
+                // ── FEEDBACK ──────────────────────────────────────
                 if (c.status === "RESOLVED") {
                     fetch(`http://localhost:8080/api/feedback/${caseId}`)
                         .then(r => r.ok ? r.json() : null)
@@ -449,7 +508,6 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(e => console.warn("Committee dropdown:", e));
 
-        // Assign case — also handles ESCALATED reassignment
         window.assignCase = function () {
             const select = document.getElementById("assignMember");
             const memberId = select ? select.value : "";
@@ -474,7 +532,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }).catch(() => { btn.innerHTML = oText; btn.disabled = false; showAlert("Server error", "danger"); });
         };
 
-        // Update status — handles escalation
         window.updateCaseStatus = function () {
             const select = document.getElementById("statusControl");
             const newStatusDisplay = select ? select.value : "";
@@ -498,13 +555,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify({ status: newStatus, performedById: currentUser.id })
             }).then(res => {
                 if (res.ok) {
-                    if (newStatus === "ESCALATED") {
-                        showAlert("Case escalated! ⚠️ Please reassign to a different committee member.", "warning");
-                        const assignSection = document.querySelector('.col-lg-6');
-                        if (assignSection) assignSection.style.border = "2px solid #ef4444";
-                    } else {
-                        showAlert(`Status updated to ${newStatusDisplay} ✅`, "success");
-                    }
+                    showAlert(`Status updated to ${newStatusDisplay} ✅`, "success");
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     btn.innerHTML = oText; btn.disabled = false;
