@@ -2,6 +2,9 @@
    resolveIT — committee.js
    FIXED: Role comparison uses toUpperCase() to work with
           backend returning "COMMITTEE" not "committee"
+   CHANGED: Evidence file section now renders in case details —
+            images inline, PDFs in iframe, others as download.
+            Incident details section also now renders.
 ============================================================ */
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -157,6 +160,88 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 activateTimeline(complaint.status);
 
+                // ── EVIDENCE FILE — renders image inline, PDF in iframe, others as download
+                const evidenceSection = document.getElementById("evidenceSection");
+                const evidenceFileDisplay = document.getElementById("evidenceFileDisplay");
+                if (evidenceSection && evidenceFileDisplay) {
+                    if (complaint.evidenceFileName) {
+                        evidenceSection.style.display = "block";
+                        const fileUrl = `http://localhost:8080/api/complaints/files/${complaint.evidenceFileName}`;
+                        const ext = complaint.evidenceFileName.split('.').pop().toLowerCase();
+                        const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
+                        const isPdf = ext === "pdf";
+
+                        if (isImage) {
+                            evidenceFileDisplay.innerHTML = `
+                            <div style="margin-top:8px">
+                                <img src="${fileUrl}" alt="Evidence"
+                                     style="max-width:100%;max-height:400px;border-radius:10px;border:1px solid #e5e7eb;object-fit:contain;"
+                                     onerror="this.outerHTML='<div class=text-danger style=font-size:13px><i class=bi bi-exclamation-circle me-1></i>Image could not be loaded.</div>'"
+                                />
+                                <div class="mt-2 d-flex gap-2">
+                                    <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:20px;font-size:12px">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i> Open in new tab
+                                    </a>
+                                    <a href="${fileUrl}" download class="btn btn-sm btn-outline-secondary" style="border-radius:20px;font-size:12px">
+                                        <i class="bi bi-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>`;
+                        } else if (isPdf) {
+                            evidenceFileDisplay.innerHTML = `
+                            <div style="margin-top:8px">
+                                <iframe src="${fileUrl}" width="100%" height="400px"
+                                        style="border-radius:10px;border:1px solid #e5e7eb" title="Evidence PDF">
+                                </iframe>
+                                <div class="mt-2 d-flex gap-2">
+                                    <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:20px;font-size:12px">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i> Open PDF
+                                    </a>
+                                    <a href="${fileUrl}" download class="btn btn-sm btn-outline-secondary" style="border-radius:20px;font-size:12px">
+                                        <i class="bi bi-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>`;
+                        } else {
+                            evidenceFileDisplay.innerHTML = `
+                            <div class="d-flex align-items-center gap-3 p-3"
+                                 style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px">
+                                <i class="bi bi-file-earmark-fill fs-4 text-success"></i>
+                                <div style="flex:1;min-width:0">
+                                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${complaint.evidenceFileName}</div>
+                                    <small class="text-muted">Uploaded by complainant</small>
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-eye me-1"></i> View
+                                    </a>
+                                    <a href="${fileUrl}" download class="btn btn-sm btn-success">
+                                        <i class="bi bi-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>`;
+                        }
+                    } else {
+                        evidenceSection.style.display = "none";
+                    }
+                }
+
+                // ── INCIDENT DETAILS
+                const incidentSection = document.getElementById("incidentSection");
+                const incidentDetailsDisplay = document.getElementById("incidentDetailsDisplay");
+                if (incidentSection && incidentDetailsDisplay) {
+                    if (complaint.incidentLocation || complaint.incidentDate || complaint.incidentTime) {
+                        incidentSection.style.display = "block";
+                        incidentDetailsDisplay.innerHTML = `
+                            ${complaint.incidentLocation ? `<p class="mb-1"><i class="bi bi-geo-alt me-1"></i><strong>Location:</strong> ${complaint.incidentLocation}</p>` : ''}
+                            ${complaint.incidentDate ? `<p class="mb-1"><i class="bi bi-calendar me-1"></i><strong>Date:</strong> ${complaint.incidentDate}</p>` : ''}
+                            ${complaint.incidentTime ? `<p class="mb-1"><i class="bi bi-clock me-1"></i><strong>Time:</strong> ${complaint.incidentTime}</p>` : ''}`;
+                    } else {
+                        incidentSection.style.display = "none";
+                    }
+                }
+
+                // Feedback
                 if (complaint.status === "RESOLVED") {
                     fetch(`http://localhost:8080/api/feedback/${caseId}`).then(r => {
                         if (r.ok) {

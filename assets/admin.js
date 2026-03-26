@@ -3,6 +3,8 @@
    All IDs match dashboard.html and case-details.html exactly.
    Feedback summary loads from backend.
    Escalation reassignment supported.
+   CHANGED: Evidence file section now renders images inline,
+            PDFs in an iframe, and other files as download link.
 ============================================================ */
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -325,34 +327,73 @@ document.addEventListener("DOMContentLoaded", function () {
                     statusControl.value = statusMap[c.status] || "Under Review";
                 }
 
-                // Evidence file — uses evidenceSection + evidenceFileDisplay IDs
+                // ── EVIDENCE FILE — renders image inline, PDF in iframe, others as download
                 const evidenceSection = document.getElementById("evidenceSection");
                 const evidenceFileDisplay = document.getElementById("evidenceFileDisplay");
                 if (evidenceSection && evidenceFileDisplay) {
                     if (c.evidenceFileName) {
                         evidenceSection.style.display = "block";
                         const fileUrl = `http://localhost:8080/api/complaints/files/${c.evidenceFileName}`;
-                        evidenceFileDisplay.innerHTML = `
-                        <div class="d-flex align-items-center gap-3 p-3"
-                             style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px">
-                            <i class="bi bi-file-earmark-fill fs-4 text-success"></i>
-                            <div>
-                                <div style="font-size:13px;font-weight:600">${c.evidenceFileName}</div>
-                                <small class="text-muted">Uploaded by complainant</small>
-                            </div>
-                            <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-success ms-auto">
-                                <i class="bi bi-eye me-1"></i> View
-                            </a>
-                            <a href="${fileUrl}" download class="btn btn-sm btn-success">
-                                <i class="bi bi-download me-1"></i> Download
-                            </a>
-                        </div>`;
+                        const ext = c.evidenceFileName.split('.').pop().toLowerCase();
+                        const isImage = ["jpg", "jpeg", "png", "gif", "webp"].includes(ext);
+                        const isPdf = ext === "pdf";
+
+                        if (isImage) {
+                            evidenceFileDisplay.innerHTML = `
+                            <div style="margin-top:8px">
+                                <img src="${fileUrl}" alt="Evidence"
+                                     style="max-width:100%;max-height:400px;border-radius:10px;border:1px solid #e5e7eb;object-fit:contain;"
+                                     onerror="this.outerHTML='<div class=text-danger style=font-size:13px><i class=bi bi-exclamation-circle me-1></i>Image could not be loaded.</div>'"
+                                />
+                                <div class="mt-2 d-flex gap-2">
+                                    <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:20px;font-size:12px">
+                                        <i class="bi bi-box-arrow-up-right me-1"></i> Open in new tab
+                                    </a>
+                                    <a href="${fileUrl}" download class="btn btn-sm btn-outline-secondary" style="border-radius:20px;font-size:12px">
+                                        <i class="bi bi-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>`;
+                        } else if (isPdf) {
+                            evidenceFileDisplay.innerHTML = `
+                            <div style="margin-top:8px">
+                                <iframe src="${fileUrl}" width="100%" height="400px"
+                                        style="border-radius:10px;border:1px solid #e5e7eb" title="Evidence PDF">
+                                </iframe>
+                                <div class="mt-2 d-flex gap-2">
+                                    <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius:20px;font-size:12px">
+                                        <i class="bi bi-file-earmark-pdf me-1"></i> Open PDF
+                                    </a>
+                                    <a href="${fileUrl}" download class="btn btn-sm btn-outline-secondary" style="border-radius:20px;font-size:12px">
+                                        <i class="bi bi-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>`;
+                        } else {
+                            evidenceFileDisplay.innerHTML = `
+                            <div class="d-flex align-items-center gap-3 p-3"
+                                 style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px">
+                                <i class="bi bi-file-earmark-fill fs-4 text-success"></i>
+                                <div style="flex:1;min-width:0">
+                                    <div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.evidenceFileName}</div>
+                                    <small class="text-muted">Uploaded by complainant</small>
+                                </div>
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    <a href="${fileUrl}" target="_blank" class="btn btn-sm btn-outline-success">
+                                        <i class="bi bi-eye me-1"></i> View
+                                    </a>
+                                    <a href="${fileUrl}" download class="btn btn-sm btn-success">
+                                        <i class="bi bi-download me-1"></i> Download
+                                    </a>
+                                </div>
+                            </div>`;
+                        }
                     } else {
                         evidenceSection.style.display = "none";
                     }
                 }
 
-                // Incident details — uses incidentSection + incidentDetailsDisplay IDs
+                // Incident details — unchanged
                 const incidentSection = document.getElementById("incidentSection");
                 const incidentDetailsDisplay = document.getElementById("incidentDetailsDisplay");
                 if (incidentSection && incidentDetailsDisplay) {
@@ -457,10 +498,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify({ status: newStatus, performedById: currentUser.id })
             }).then(res => {
                 if (res.ok) {
-                    // If escalated, show reassignment prompt
                     if (newStatus === "ESCALATED") {
                         showAlert("Case escalated! ⚠️ Please reassign to a different committee member.", "warning");
-                        // Highlight the assign section
                         const assignSection = document.querySelector('.col-lg-6');
                         if (assignSection) assignSection.style.border = "2px solid #ef4444";
                     } else {
